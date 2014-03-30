@@ -22,6 +22,9 @@ class SSHProtocol(recvline.HistoricRecvLine):
     def do_quit(self):
         self.terminal.loseConnection()
 
+    def do_power(self, number):
+        self.terminal.write(str(int(number)**2))
+
     def getCommand(self, cmd):
         return getattr(self, 'do_{0}'.format(cmd), None)
 

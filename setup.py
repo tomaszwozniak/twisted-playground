@@ -20,6 +20,8 @@ setup(
     ftp = playground.ftp:main
     manhole = playground.manhole:main
     ssh = playground.ssh:main
+    irc_bot = playground.irc_bot:main
+    irc_server = playground.irc_server:main
 ''',
     install_requires=[
         'Twisted',
