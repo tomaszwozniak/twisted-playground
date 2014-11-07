@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Twisted</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Twisted</h1>
+					<h3>Network programming in Python</h3>
+                    <p>Michał Rostecki, Tomasz Woźniak</p>
+                    <p>STXnext</p>
+				</section>
+
+				<section>
+                    <section>
+                        <h2>What is Twisted?</h2>
+                        <p>
+                            Twisted is a Python-based event-driven networking framework which allows us to build client and server applications
+                            using TCP, FTP, IRC, Jabber, IMAP, SMTP, SSH and many other internet protocols.
+                        </p>
+                    </section>
+                    <section>
+                        <h2>Why we needed it?</h2>
+                        <p>
+                            There are situations when just setting ftpd, *ircd, sendmail, sshd or any other ready-to-use networking daemon isn't enough,
+                            when we want to control what server exactly does serve, how users will be authenticated. The integration of many protocols and even with some Python code sounds like a good idea, doesn't it?
+                        </p>
+                    </section>
+                    <section>
+                        <h2>Any other reasons to use Twisted?</h2>
+                        <ul>
+                            <li>because of Python ;)</li>
+                            <li>cross-platform</li>
+                            <li>asynchronous, event-driven</li>
+                            <li>huge amount of functionality and protocols</li>
+                            <li>extensible</li>
+                            <li>open source</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>What Twisted does not provide or what provides badly? (AFAIK)</h2>
+                        <ul>
+                            <li>SOCKS5 and some official proxy support</li>
+                            <li>their official documentation and examples could be more readable and friendly</li>
+                            <li>(only in Python 2.x) Twisted classes don't inherit from <i>object</i>, so i.e. we cannot do <i>super</i></li>
+                        </ul>
+                    </section>
+				</section>
+
+                <section>
+                    <section>
+                        <h2>Twisted's habbits</h2>
+                        <ul>
+                            <li>The most of theorists of clean code in Python agree that variable and function/method names should be written with underscores instead of camel case. In Twisted we:
+                            <ul>
+                                <li>use camel case generally</li>
+                                <li>use underscores in similar-named methods/attribures which we gain with <i>getattr</i></li>
+                            </ul>
+                            </li>
+                            <li>Zope provides Java-like interfaces - Twisted uses them instead of ABC module in standard library.</li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Network application flow patterns</h2>
+                        <ul>
+                            <li>Synchronous single-threaded - tasks are performed serially, one task block I/O and other have to wait.</li>
+                            <li>Multi-threaded - multiple tasks are performed by mutiple threads or processes (but some resources should be shared anyway).</li>
+                            <li>Event driven - the core of application is an event loop which uses callbacks when event occurs; it can perform many tasks in the single thread and process. This model is becoming very popular, mainly by nginx web server, but also by Twisted.</li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Elements of Twisted apps</h2>
+                        <ul>
+                            <li>
+                            <b>Protocol</b> - a protocol in the application layer (like HTTP, FTP, SSH etc., but we can also create our own).
+                                <ul>
+                                    <li><b>Avatar</b> - a object which represents actions and data available to a user. Examples: avatar for FTP is FTP shell for given user, for SSH it's a remote shell, for HTTP is a resource.</li>
+                                    <li><b>Portal</b> - initiates a login request with credentials and brings the avatar to a user.</li>
+                                    <li><b>Credentials checker</b> - checks the given credentials and returns the avatar ID.</li>
+                                    <li><b>Realm</b> - returns the avatar for the avatar ID</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+                    <section>
+                        <ul>
+                            <li><b>Protocol factory</b> - factory which creates a protocol instance for every connections.</li>
+                            <li><b>Reactor</b> - the core of the event loop, which waits for events and dispatches them by protocol factory.</li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Respository</h2>
+                    <pre><code>git clone https://github.com/tomaszwozniak/twisted-playground.git
+python boostrap.py
+# if the one above didn't work
+python bootstrap.py -v 2.1.1
+bin/buildout</code></pre>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Deferreds</h2>
+                        <p>Callback is the fundamental part of event driven application, which are indivated by reactor (event loop) due to events.</p>
+                        <p>Deferred is Twisted's abstraction to manage callbacks. It's the object with two chains - for success callbacks and failure errbacks. When the successful event is triggered, it's propagated in the all callbacks in Deffered's chain.</p>
+                    </section>
+                    <section>
+                        <h2>Basic example</h2>
+                        <p>This example makes no sense in terms of network asynchronous programming, but is shows very clearly how Deffered and callbacks do work.</p>
+                        <pre><code>from __future__ import print_function
+
+from twisted.internet.defer import Deferred
+
+
+def addBold(result):
+    return '<b>{0}</b>'.format(result)
+
+
+def addItalic(result):
+    return '<i>{0}</i>'.format(result)
+
+
+def printHTML(result):
+    print(result)</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>d = Deferred()
+
+d.addCallback(addBold)
+d.addCallback(addItalic)
+d.addCallback(printHTML)
+
+d.callback('Hello world!')</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ bin/deferred_html
+<i><b>Hello world!</b></i></code></pre>
+                    </section>
+                    <section>
+                        <h2>Errbacks</h2>
+                        <p>An example which makes more sense... maybe a little bit more... and can fail sometimes ;)</p>
+                        <pre><code>from __future__ import print_function
+
+from twisted.internet.defer import Deferred
+
+
+def onSucces(result):
+    if 'foo' not in result.lower():
+        raise Exception(result)
+    return 'Success on: {0}'.format(result)
+
+
+def onFailure(failure):
+    return 'Failure on: {0}'.format(failure)</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def getDeferred():
+    d = Deferred()
+    d.addCallback(onSucces)
+    d.addErrback(onFailure)
+    d.addBoth(print)
+
+    return d
+
+
+getDeferred().callback('Foo Bar')
+getDeferred().callback('Wahoo')</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ bin/deferred
+Success on: Foo Bar
+Failure on: [Failure instance: Traceback: <type 'exceptions.Exception'>: Wahoo
+deferred.py:26:<module>
+/Users/vador/python/twisted/lib/python2.7/site-packages/twisted/internet/defer.py:382:callback
+/Users/vador/python/twisted/lib/python2.7/site-packages/twisted/internet/defer.py:490:_startRunCallbacks
+--- <exception caught here> ---
+/Users/vador/python/twisted/lib/python2.7/site-packages/twisted/internet/defer.py:577:_runCallbacks
+deferred.py:8:onSucces
+]</pre></code>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Logging</h2>
+                    <p>twisted.python.log function saves log to given file descriptor</p>
+                    <pre><code>import sys
+from twisted.python import log
+
+log.startLogging(sys.stdout)</code></pre>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Echo TCP server</h2>
+                        <p>The simpliest example of server app, some kind of hello world in Twisted.</p>
+                        <pre><code>from twisted.internet import protocol, reactor
+
+
+class Echo(protocol.Protocol):
+
+    def dataReceived(self, data):
+        self.transport.write(data)
+
+
+class EchoFactory(protocol.Factory):
+
+    def buildProtocol(self, addr):
+        return Echo()
+
+
+def main():
+    log.startLogging(sys.stdout)
+
+    reactor.listenTCP(8000, EchoFactory())
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ telnet localhost 8000
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+hello world
+hello world
+foo
+foo
+bar
+bar
+^]
+telnet> quit
+Connection closed.</code></pre>
+                    </section>
+                    <section>
+                        <h2>TCP server with "shell"</h2>
+                        <pre><code>import sys
+
+from twisted.internet import protocol, reactor
+from twisted.python import log
+
+
+class CommandProtocol(protocol.Protocol):
+
+    def write(self, msg):
+        self.transport.write('{0}\n'.format(msg))
+
+    def do_echo(self, *args):
+        self.write(' '.join(args))
+
+    def getCommand(self, cmd):
+        return getattr(self, 'do_{0}'.format(cmd), None)</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>    def dataReceived(self, data):
+        if not data:
+            return
+
+        data = data.strip().split()
+        cmd = data[0]
+        args = data[1:]
+        command = self.getCommand(cmd)
+
+        if not command:
+            self.write('No such command: {0}'.format(cmd))
+            return
+
+        try:
+            command(*args)
+        except Exception, e:
+            self.write('Error: {0}'.format(e))</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class CommandFactory(protocol.Factory):
+
+    def buildProtocol(self, addr):
+        return CommandProtocol()
+
+
+def main():
+    log.startLogging(sys.stdout)
+
+    reactor.listenTCP(8000, CommandFactory())
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ telnet localhost 8000
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+echo foo bar
+foo bar
+foo
+No such command: foo
+^]
+telnet> Connection closed.</code></pre>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>HTTP</h2>
+                        <p>Twisted is not the web framework like Django, Flask etc., but it can handle HTTP requests and we can write in it our own lightweight "framework".</p>
+                    </section>
+                    <section>
+                        <h2>"Hello world" example</h2>
+                        <pre><code>import sys
+
+from twisted.internet import reactor
+from twisted.web import http
+from twisted.python import log
+
+
+class HTTPRequestHandler(http.Request):
+    resources = {
+        '/': '<h2>Main page</h2>',
+        '/about/': '<h2>About me</h2>'
+    }</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>    def process(self):
+        self.setHeader('Content-Type', 'text/html')
+
+        if self.path in self.resources.keys():
+            self.write(self.resources[self.path])
+        else:
+            self.setResponseCode(http.NOT_FOUND)
+            self.write('<h2>Not found</h2>')
+
+        self.finish()</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class MyHTTP(http.HTTPChannel):
+    requestFactory = HTTPRequestHandler
+
+
+class MyHTTPFactory(http.HTTPFactory):
+
+    def buildProtocol(self, addr):
+        return MyHTTP()
+
+
+def main():
+    log.startLogging(sys.stdout)
+
+    reactor.listenTCP(8000, MyHTTPFactory())
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Let's see the result</p>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                    <h2>FTP</h2>
+                    <pre><code>import sys
+
+from twisted.cred import checkers, portal
+from twisted.internet import reactor
+from twisted.protocols import ftp
+from twisted.python import log
+
+
+def main():
+    log.startLogging(sys.stdout)
+
+    realm = ftp.FTPRealm('./ftp', userHome='./ftp')
+
+    ftpFactory = ftp.FTPFactory()
+    ftpFactory.portal = portal.Portal(realm)</code></pre>
+                </section>
+                <section>
+                    <pre><code>
+    ftpFactory.portal.registerChecker(
+        checkers.InMemoryUsernamePasswordDatabaseDontUse(admin='admin')
+    )
+
+    reactor.listenTCP(8021, ftpFactory)
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                </section>
+
+
+                <section>
+                    <section>
+                        <h2>twisted.conch.manhole</h2>
+                        <p>Serving Python shell trough SSH protocol</p>
+                    </section>
+                    <section>
+                        <pre><code>from twisted.conch import manhole, manhole_ssh
+from twisted.cred import checkers, portal
+from twisted.internet import reactor
+
+def getManholeFactory(namespace, **passwords):
+    realm = manhole_ssh.TerminalRealm()
+    realm.chainedProtocolFactory.protocolFactory = (
+        lambda _: manhole.Manhole(namespace)
+    )
+    p = portal.Portal(realm)
+    p.registerChecker(
+        checkers.InMemoryUsernamePasswordDatabaseDontUse(**passwords)
+    )
+    f = manhole_ssh.ConchFactory(p)
+
+    return f</code></pre>
+                    </section>
+                    <section><pre><code>def main():
+    log.startLogging(sys.stdout)
+    reactor.listenTCP(2222, getManholeFactory(globals(), admin='admin'))
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ ssh -p 2222 admin@localhost
+>>> from __future__ import print_function
+>>> print('Hello world')
+Hello world
+>>> dir()
+['_', '__builtins__', '__doc__', '__file__', '__name__', '__package__', 'checkers', 'getManholeFactory', 'manhole', 'manhole_ssh', 'portal', 'print_function', 'reactor']
+>>> [i**2 for i in xrange(10)]
+[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</pre></code>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>twisted.conch</h2>
+                        <p>Using SSH protocol in general</p>
+                    </section>
+                    <section>
+                        <pre><code>import re
+import sys
+
+from twisted.conch import avatar, interfaces, recvline
+from twisted.conch.insults import insults
+from twisted.conch.ssh import factory, keys, session
+from twisted.cred import checkers, portal
+from twisted.internet import reactor
+from twisted.python import log
+
+from zope.interface import implements</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class SSHProtocol(recvline.HistoricRecvLine):
+
+    def __init__(self, user):
+        self.user = user
+
+    def do_echo(self, *args):
+        self.terminal.write(' '.join(args))
+
+    def do_quit(self):
+        self.terminal.loseConnection()
+
+    def getCommand(self, cmd):
+        return getattr(self, 'do_{0}'.format(cmd), None)</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def lineReceived(self, line):
+        if line:
+            line = line.strip().split()
+            cmd = line[0]
+            args = line[1:]
+            command = self.getCommand(cmd)
+            if command:
+                try:
+                    command(*args)
+                except Exception, e:
+                    self.terminal.write('Error: {0}'.format(e))
+            else:
+                self.terminal.write('No such command: {0}'.format(cmd))
+
+        self.terminal.nextLine()
+        self.terminal.write(self.ps[self.pn])</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class SSHAvatar(avatar.ConchUser):
+    implements(interfaces.ISession)
+
+    def __init__(self, username):
+        # cannot do super
+        avatar.ConchUser.__init__(self)
+
+        self.username = username
+        self.channelLookup['session'] = session.SSHSession
+
+    def openShell(self, protocol):
+        serverProtocol = insults.ServerProtocol(SSHProtocol, self)
+        serverProtocol.makeConnection(protocol)
+        protocol.makeConnection(session.wrapProtocol(serverProtocol))</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>
+    def getPty(self, *args):
+        return None
+
+    def execCommand(self, *args):
+        raise NotImplementedError()
+
+    def closed(self):
+        pass</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class SSHRealm(object):
+    implements(portal.IRealm)
+
+    def requestAvatar(self, avatarId, mind, *interfaces):
+        return interfaces[0], SSHAvatar(avatarId), lambda: None</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def getRSAKeys():
+    with open('id_rsa') as privateBlobFile:
+        privateBlob = privateBlobFile.read()
+        privateKey = keys.Key.fromString(data=privateBlob)
+
+    with open('id_rsa.pub') as publicBlobFile:
+        publicBlob = publicBlobFile.read()
+        publicKey = keys.Key.fromString(data=publicBlob)
+
+    return publicKey, privateKey</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def main():
+    log.startLogging(sys.stdout)
+
+    sshFactory = factory.SSHFactory()
+    sshFactory.portal = portal.Portal(SSHRealm())
+    sshFactory.portal.registerChecker(
+        checkers.InMemoryUsernamePasswordDatabaseDontUse(admin='admin')
+    )
+    publicKey, privateKey = getRSAKeys()
+    sshFactory.publicKeys = {'ssh-rsa': publicKey}
+    sshFactory.privateKeys = {'ssh-rsa': privateKey}
+    reactor.listenTCP(2222, sshFactory)
+    reactor.run()
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <pre><code>$ ssh -p 2222 admin@localhost
+>>> echo hello world
+hello world
+>>> echo foo
+foo
+>>> echo bar
+bar
+>>> some_non_existent_command
+No such command: some_non_existent_command
+>>> quit
+Connection to localhost closed.</pre></code>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>IRC bot</h2>
+                        <p>Using Twisted Words (chat framework with protocols like IRC, Jabber/XMPP)</p>
+                    </section>
+                    <section>
+                        <pre><code>import sys
+
+from twisted.internet import protocol, reactor
+from twisted.words.protocols import irc
+from twisted.python import log</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class EchoBot(irc.IRCClient):
+    def __init__(self, nickname, channel):
+        self.nickname = nickname
+        self.channel = channel
+
+    def signedOn(self):
+        self.join(self.channel)
+
+    def privmsg(self, user, channel, msg):
+        message = '{} wrote: {}'.format(user, msg)
+        if channel == self.nickname:
+            self.msg(user, message)
+            return
+        self.msg(channel, message)
+
+    def action(self, user, channel, action):
+        self.describe(channel, '{} with {}'.format(action, user))</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>class EchoBotFactory(protocol.ClientFactory):
+
+    def __init__(self, nickname, channel):
+        self.nickname = nickname
+        self.channel = channel
+
+    def buildProtocol(self, addr):
+        proto = EchoBot(self.nickname, self.channel)
+        proto.factory = self
+
+        return proto
+
+    def clientConnectionLost(self, connector, reason):
+        connector.connect()
+
+    def clientConnectionFailed(self, connector, reason):
+        reactor.stop()</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def main():
+    log.startLogging(sys.stdout)
+
+    network, port, nickname, channel = sys.argv[1:]
+    port = int(port)
+
+    reactor.connectTCP(network, port, EchoBotFactory(nickname, channel))
+    reactor.run()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <img src="bot.png" />
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>IRC server</h2>
+                        <p>Also based on Twisted Words</p>
+                    </section>
+                    <section>
+                        <pre><code>import sys
+
+from twisted.cred import checkers, portal
+from twisted.internet import reactor
+from twisted.python import log
+from twisted.words import service</code></pre>
+                    </section>
+                    <section>
+                        <pre><code>def main():
+    log.startLogging(sys.stdout)
+
+    wordsRealm = service.InMemoryWordsRealm('twisted-playground.org')
+    wordsRealm.createGroupOnRequest = True
+
+    checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(admin='admin')
+
+    ircPortal = portal.Portal(wordsRealm, [checker])
+
+    factory = service.IRCFactory(wordsRealm, ircPortal)
+
+    reactor.listenTCP(6666, factory)
+    reactor.run()</code></pre>
+                    </section>
+                    <section>
+                        <p>Result:</p>
+                        <img src="server.png" />
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Exercises</h2>
+                    <ol>
+                        <li>(2) Write a TCP echo server, which will decapitalize given text.</li>
+                        <li>(2) Write a TCP server with some mathematic commands - addition, substraction, multiplication, division.</li>
+                        <li>(2) Do the same with SSH server. And with additional commands - power and root.</li>
+                        <li>(3) Add to SSH server a possibility of running some system process - any working example is acceptable.</li>
+                        <li>(2) Write an IRC bot which do this mathematic stuff when user write some "command". I.e. when user write on channel <i>add 2 5 6 1</i>.</li>
+                    </ol>
+                </section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
